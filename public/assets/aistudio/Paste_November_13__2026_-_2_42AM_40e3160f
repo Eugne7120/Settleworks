@@ -1,0 +1,1145 @@
+# Settleworks Protocol — PRD & Project Blueprint v1.0
+
+**Status dokumen:** konsep awal untuk validasi teknis, legal, dan ekonomi.  
+**Target jaringan:** Robinhood Chain mainnet, chain ID **4663**.  
+**Kategori:** hybrid token–NFT, fee-sharing, collectible financial engines.  
+**Cakupan:** konsep produk, mekanisme, tokenomics, arsitektur, keamanan, compliance, dan roadmap.  
+**Tidak termasuk:** desain UI, frontend, atau implementasi kode.
+
+> Semua parameter tokenomics di bawah adalah **usulan desain baru**, bukan parameter proyek yang sudah live.
+
+## 1. Ringkasan eksekutif
+
+**Settleworks Protocol** adalah protokol aset hibrida di Robinhood Chain yang mengubah token likuid menjadi **Settle Engines**—NFT yang dapat dibiarkan terbuka dan reversible, atau dijadikan mesin reward permanen melalui proses satu arah bernama **Commissioning**.
+
+Konsep dasarnya:
+
+```text
+Beli $WORKS
+     │
+     ▼
+Materialize
+1 $WORKS dikunci → 1 Open Engine
+     │
+     ├── Dissolve
+     │   Open Engine dibakar → 1 $WORKS kembali
+     │
+     └── Commission
+         1 $WORKS dibakar permanen
+         Open Engine → Commissioned Engine
+         Mulai memperoleh bagian reward
+```
+
+Perbedaan utama dari konsep sebelumnya:
+
+1. **Tidak menggunakan ERC-404 otomatis.** Token dan NFT dihubungkan melalui controller dengan aksi eksplisit.
+2. **Open Engine dapat dikembalikan menjadi token.** Hanya Commissioned Engine yang permanen.
+3. **Tidak ada transfer tax, blacklist perdagangan, atau routing lock.**
+4. **Reward awal berupa USDG**, bukan token inflasioner atau token proyek sendiri.
+5. **Stock Tokens menjadi modul tambahan**, bukan janji utama sejak hari pertama.
+6. **Randomness tidak memakai `prevrandao`**, karena nilainya konstan di Robinhood Chain.
+7. **Tidak ada whitelist atau launch tax 40%.**
+
+## 2. Identitas proyek
+
+### Nama
+
+**Settleworks Protocol**
+
+Nama ini merepresentasikan dua hal:
+
+- **Settle:** settlement, penyelesaian transaksi, dan aliran nilai.
+- **Works:** mesin, pekerjaan ekonomi, dan infrastruktur yang terus beroperasi.
+
+Nama bersifat independen dan tidak menggunakan “Robinhood”, “Hood”, atau unsur yang dapat memberi kesan afiliasi resmi.
+
+### Nama aset
+
+| Elemen | Nama usulan |
+|---|---|
+| Token fungible | `$WORKS` |
+| Koleksi NFT | Settle Engines |
+| NFT sebelum activation | Open Engine |
+| NFT setelah activation | Commissioned Engine |
+| Proses mint NFT | Materialize |
+| Proses kembali ke token | Dissolve |
+| Proses activation permanen | Commission |
+| Mata uang reward awal | USDG |
+| Program reward tambahan | Reward Tracks |
+| Pasar NFT resmi | Settle Bazaar |
+
+Nama dan ticker tetap harus melewati pemeriksaan merek, domain, kontrak, dan ticker sebelum dipublikasikan.
+
+### Tagline utama
+
+**“Commission an engine. Share the flow.”**
+
+Alternatif narasi pendek:
+
+- **“Put liquidity to work.”**
+- **“Every trade powers an engine.”**
+- **“From liquid units to permanent engines.”**
+
+### Positioning
+
+Settleworks bukan produk resmi Robinhood, bukan broker, bukan penerbit saham, dan bukan Layer 2 baru.
+
+Positioning yang digunakan:
+
+> **Settleworks adalah protokol aset hibrida yang mengubah unit likuid menjadi mesin kolektibel dengan hak atas distribusi biaya protokol.**
+
+Bukan:
+
+- “Saham tokenized yang memberi dividen.”
+- “NFT dengan APY tetap.”
+- “Token resmi Robinhood Chain.”
+- “Mesin yang secara otomatis menghasilkan pendapatan pasif dari saham.”
+
+## 3. Latar belakang dan masalah
+
+Model NFT reward umumnya memiliki beberapa kelemahan:
+
+1. **Staking hanya mengunci NFT**, tanpa perubahan ekonomi yang berarti.
+2. **Reward dibayar dengan token emisi**, sehingga menciptakan inflasi dan tekanan jual.
+3. **Pemilik tidak memahami apakah NFT dapat kembali menjadi token.**
+4. **Mekanisme ERC-404 otomatis dapat menimbulkan edge case** pada pool, router, kontrak marketplace, dan wallet kontrak.
+5. **Admin sering dapat mengubah fee, metadata, venue, atau reward token.**
+6. **APY dipasarkan seolah tetap**, walaupun reward sepenuhnya bergantung pada volume.
+7. **Royalti NFT diasumsikan berlaku di semua pasar**, padahal tidak selalu dapat dipaksakan.
+8. **Randomness berbasis data blok tidak aman atau bahkan tidak tersedia** pada beberapa L2.
+
+Settleworks dirancang untuk menjawab masalah tersebut melalui struktur yang lebih sederhana dan dapat diverifikasi.
+
+## 4. Visi, tujuan, dan non-tujuan
+
+### Visi
+
+Menjadikan Settleworks sebagai **standar aset hibrida yang dapat berpindah antara likuiditas fungible dan utilitas NFT permanen**, dengan reward yang berasal dari aktivitas nyata dan dapat ditambahkan oleh protokol lain.
+
+### Tujuan MVP
+
+1. Meluncurkan `$WORKS` dengan suplai dan distribusi yang transparan.
+2. Menyediakan konversi dua arah antara `$WORKS` dan Open Engine.
+3. Menyediakan konversi satu arah menjadi Commissioned Engine.
+4. Mendistribusikan USDG dari biaya protokol berdasarkan bobot mesin.
+5. Menyediakan pasar NFT resmi dengan informasi reward yang mengikuti aset.
+6. Menjadikan seluruh invariant dapat diuji dan diverifikasi publik.
+7. Menghilangkan kontrol admin yang tidak diperlukan.
+
+### Non-tujuan MVP
+
+- Tidak menerbitkan Stock Tokens sendiri.
+- Tidak menawarkan kepemilikan saham atau hak pemegang saham.
+- Tidak menjanjikan dividen atau APY tetap.
+- Tidak menyediakan leverage, lending, atau derivatives.
+- Tidak menjalankan custodial exchange.
+- Tidak memiliki governance token terpisah.
+- Tidak membangun chain atau native gas token baru.
+- Tidak mengaktifkan Stock Token Reward Tracks sebelum legal dan teknis siap.
+
+## 5. Target pengguna
+
+| Pengguna | Kebutuhan | Produk yang relevan |
+|---|---|---|
+| Liquidity trader | Masuk/keluar tanpa terikat NFT | `$WORKS` dan canonical curve |
+| Collector | Memilih ID, generasi, dan visual | Open/Commissioned Engines |
+| Reward seeker | Memperoleh bagian dari biaya dalam USDG | Commissioning dan reward engine |
+| NFT trader | Memperdagangkan mesin beserta pending reward | Settle Bazaar |
+| Ecosystem partner | Membiayai reward untuk komunitas tertentu | Reward Tracks |
+| Auditor/integrator | Memverifikasi suplai, escrow, dan reward | Contract events dan invariant publik |
+
+Settleworks tidak menargetkan pengguna yang menganggap produk ini sebagai tabungan, saham konvensional, atau produk dengan imbal hasil yang dijamin.
+
+## 6. Parameter dasar
+
+| Parameter | Usulan |
+|---|---|
+| Jaringan | Robinhood Chain |
+| Chain ID | 4663 |
+| Gas | ETH |
+| Token | `$WORKS` |
+| Initial economic units | **4.663** |
+| Koleksi | **4.663 Settle Engines** |
+| Quote asset utama | USDG |
+| Reward awal | USDG |
+| Alokasi token tim | 0 |
+| Presale/private round | 0 |
+| Canonical pool allocation | 100% dari initial token supply |
+| Transfer tax | 0% |
+| Canonical trading fee | 1% dari notional USDG |
+| Settle Bazaar fee | 5% dari harga NFT |
+| Upgradeable core | Tidak |
+| Stock Token Tracks | Nonaktif pada MVP |
+
+Robinhood Chain memang menggunakan ETH sebagai native gas, chain ID 4663 untuk mainnet, serta Ethereum blobs untuk data availability.
+
+USDG dipilih sebagai quote dan reward awal agar pengguna tidak menerima reward dalam token proyek yang terus dicetak. Alamat USDG resmi tersedia dalam daftar kontrak Robinhood Chain; integrasi harus memakai alamat registry, bukan sekadar nama ticker.
+
+## 7. Model aset dan state machine
+
+### 7.1 Reserve Engine
+
+ID yang belum dimaterialisasikan.
+
+- Berada dalam reserve pool.
+- Belum menjadi NFT.
+- Memiliki generasi dan visual yang sudah ditentukan oleh assignment hash.
+- Dapat diundi ketika pengguna melakukan Materialize.
+
+### 7.2 Open Engine
+
+NFT yang didukung oleh 1 `$WORKS` yang disimpan sebagai escrow.
+
+Karakteristik:
+
+- Dimiliki sebagai ERC-721 dengan ID tertentu.
+- Dapat ditransfer atau dijual.
+- Tidak memperoleh reward.
+- Dapat di-Dissolve kembali menjadi 1 `$WORKS`.
+- Tidak dapat berubah generasi.
+- Escrow hanya dapat dilepaskan melalui Dissolve.
+
+### 7.3 Commissioned Engine
+
+NFT permanen yang token pendukungnya telah dibakar.
+
+Karakteristik:
+
+- Tetap menjadi ERC-721 dengan ID yang sama.
+- Tidak dapat di-Dissolve.
+- Memperoleh USDG berdasarkan bobot generasi.
+- Pending reward mengikuti NFT ketika dijual.
+- Tidak memiliki public burn function.
+- Tidak dapat dikembalikan menjadi `$WORKS`.
+
+### 7.4 State flow lengkap
+
+```text
+RESERVE
+   │
+   │ Materialize: kunci 1 WORKS + randomness
+   ▼
+OPEN ENGINE
+   │
+   │ Dissolve: bakar Open NFT, buka 1 WORKS
+   ├──────────────────────► RESERVE
+   │
+   │ Commission: bakar 1 WORKS dari escrow
+   ▼
+COMMISSIONED ENGINE — terminal state
+```
+
+## 8. Invariant ekonomi
+
+Invariant merupakan bagian inti protokol dan harus tersedia sebagai fungsi publik.
+
+### A. Economic units
+
+```text
+WORKS.totalSupply()
++ totalCommissioned × 1 WORKS
+= 4.663 WORKS
+```
+
+Ini berlaku karena:
+
+- Materialize hanya mengunci token, tidak mengurangi `totalSupply`.
+- Dissolve hanya membuka escrow.
+- Hanya Commission yang membakar token.
+- Tidak ada burn melalui transfer atau biaya jual.
+
+### B. ID collection
+
+```text
+reserveCount + openCount + commissionedCount = 4.663
+```
+
+### C. Escrow
+
+```text
+WORKS.balanceOf(EngineController)
+= openCount × 1 WORKS
++ saldo yang sedang menunggu randomness
+```
+
+Setiap Open Engine harus memiliki backing tepat 1 token. Tidak boleh ada NFT Open tanpa escrow.
+
+### D. Reward
+
+```text
+totalRewardMasuk
+= claimed + unclaimed + undistributed
+```
+
+Tidak boleh ada reward yang dapat ditarik oleh treasury atau administrator dari alokasi mesin.
+
+## 9. Alur fungsional
+
+### FR-01 — Membeli `$WORKS`
+
+Pengguna menukar USDG menjadi `$WORKS` melalui canonical curve.
+
+Syarat:
+
+- Tidak ada whitelist.
+- Tidak ada batas wallet.
+- Tidak ada pajak berdasarkan waktu peluncuran.
+- Tidak ada fungsi admin untuk mematikan penjualan.
+- Quote menampilkan fee dan slippage secara on-chain melalui fungsi pembacaan kontrak.
+
+### FR-02 — Materialize
+
+Pengguna menyerahkan 1 `$WORKS` ke EngineController.
+
+Proses:
+
+1. Token masuk escrow.
+2. Controller membuat randomness request.
+3. Randomness terverifikasi dikirim oleh provider.
+4. Satu ID diambil dari reserve menggunakan lazy Fisher–Yates.
+5. Open Engine dicetak kepada pengguna.
+
+Jika randomness tidak tersedia setelah batas waktu yang ditentukan, misalnya 24 jam:
+
+- Pengguna dapat membatalkan request.
+- Escrow dikembalikan.
+- Tidak ada NFT yang dicetak.
+- Request yang sama tidak dapat digunakan kembali.
+
+### FR-03 — Dissolve
+
+Hanya pemilik Open Engine yang dapat melakukan Dissolve.
+
+Proses:
+
+1. NFT Open dibakar.
+2. ID kembali ke reserve.
+3. Escrow 1 `$WORKS` dikirim ke pemilik.
+4. ID dapat diundi kembali di masa depan dengan visual dan generasi yang sama.
+
+Commissioned Engine tidak dapat menggunakan fungsi ini.
+
+### FR-04 — Commission
+
+Hanya pemilik Open Engine yang dapat melakukan Commission.
+
+Proses:
+
+1. Sistem memverifikasi status NFT dan kepemilikan.
+2. Satu `$WORKS` dari escrow dibakar.
+3. Status NFT berubah menjadi Commissioned.
+4. Bobot generasi didaftarkan pada reward engine.
+5. Reward debt ditetapkan pada nilai akumulator saat ini agar mesin tidak memperoleh reward historis.
+6. Mesin mulai berhak atas distribusi berikutnya.
+
+Tidak ada fungsi reverse Commission.
+
+### FR-05 — Claim USDG
+
+Pengguna dapat mengklaim kapan saja:
+
+- Per satu mesin.
+- Per beberapa mesin dalam batch.
+- Tanpa lock-up.
+- Tanpa biaya klaim tambahan dari protokol; pengguna hanya membayar gas.
+
+### FR-06 — Transfer NFT
+
+Ketika NFT berpindah pemilik:
+
+- Kepemilikan berpindah secara atomik.
+- Pending reward tetap melekat pada NFT.
+- Reward yang sudah diklaim tidak berpindah.
+- Listing lama harus dibatalkan atau diselesaikan sesuai status order.
+
+### FR-07 — Menjual NFT melalui Settle Bazaar
+
+Bazaar mendukung:
+
+- Fixed-price listing.
+- Collection offer.
+- Class-specific offer.
+- Open dan Commissioned Engines.
+- Pembayaran dalam USDG.
+- Atomic NFT settlement.
+- Fee 5%.
+
+Marketplace eksternal tetap dapat digunakan. ERC-2981 dapat memberikan sinyal royalti, tetapi **tidak ada janji bahwa semua marketplace eksternal akan menegakkannya**.
+
+## 10. Generasi dan bobot
+
+Suplai 4.663 mengacu pada chain ID Robinhood Chain, bukan sekadar angka koleksi acak.
+
+| Generasi | Suplai | Proporsi awal | Bobot |
+|---|---:|---:|---:|
+| **Relay** | 1.865 | ±40% | 1,00× |
+| **Ledger** | 1.398 | ±30% | 1,25× |
+| **Vault** | 933 | ±20% | 1,75× |
+| **Prime** | 467 | ±10% | 3,00× |
+| **Total** | **4.663** | **100%** | — |
+
+Fungsi generasi:
+
+- Menentukan visual dasar.
+- Menentukan bobot reward.
+- Menentukan kelayakan Reward Tracks tertentu di masa depan.
+
+Traits kosmetik tidak memengaruhi bobot. Ini mencegah narasi bahwa aksesori langka secara otomatis menghasilkan reward lebih besar.
+
+### Makna visual generasi
+
+- **Relay:** aliran, koneksi, routing, dan pergerakan nilai.
+- **Ledger:** pencatatan, kertas settlement, dan arsip transaksi.
+- **Vault:** keamanan, custody, dan perlindungan aset.
+- **Prime:** mesin puncak dengan bentuk paling monumental.
+
+Nama-nama tersebut adalah kelas koleksi, bukan klaim bahwa mesin menjalankan routing, custody, atau jasa keuangan sebenarnya.
+
+## 11. Canonical curve dan likuiditas
+
+### Model
+
+MVP menggunakan **constant-product canonical vault**:
+
+```text
+k = reserveUSDG × reserveWORKS
+```
+
+Parameter awal:
+
+- `T0 = 4.663 WORKS`
+- `Q0 = jumlah USDG yang didanai sebelum launch`
+- Initial spot price = `Q0 / 4.663`
+
+Nilai `Q0` belum ditetapkan dalam PRD. Penetapannya memerlukan simulasi:
+
+- Target kedalaman likuiditas.
+- Slippage untuk pembelian 1, 10, dan 100 unit.
+- Modal yang benar-benar tersedia.
+- Ketahanan terhadap penjualan awal.
+- Konsentrasi kepemilikan setelah launch.
+
+### Fee pada pembelian
+
+```text
+grossUSDG = USDG yang dibayar
+fee = grossUSDG × 1%
+swapInput = grossUSDG − fee
+```
+
+### Fee pada penjualan
+
+```text
+grossUSDGOut = hasil kurva sebelum fee
+fee = grossUSDGOut × 1%
+netUSDGOut = grossUSDGOut − fee
+```
+
+Dengan demikian, fee selalu diterima dalam USDG pada kedua arah transaksi. Tidak ada token `$WORKS` yang dibakar melalui biaya jual.
+
+### Penguncian likuiditas
+
+Canonical vault dirancang tanpa fungsi penarikan LP:
+
+- Tidak ada LP token yang dapat dibawa oleh tim.
+- Tidak ada fungsi `withdrawLiquidity`.
+- Tidak ada admin yang dapat mengambil reserve.
+- Hanya fungsi swap dan pengumpulan fee sesuai aturan kontrak.
+
+Pool eksternal tidak dilarang. Namun, hanya canonical vault yang secara otomatis membiayai reward engine.
+
+## 12. Pembagian biaya
+
+Semua fee protokol masuk ke immutable FeeSplitter.
+
+| Penerima | Bagian fee |
+|---|---:|
+| Commissioned Engines | **65%** |
+| Protocol treasury | **25%** |
+| Security Fund | **10%** |
+
+Dampaknya:
+
+### Canonical trading fee 1%
+
+| Penerima | Efektif dari volume |
+|---|---:|
+| Commissioned Engines | 0,65% |
+| Treasury | 0,25% |
+| Security Fund | 0,10% |
+
+### Settle Bazaar fee 5%
+
+| Penerima | Efektif dari harga jual NFT |
+|---|---:|
+| Commissioned Engines | 3,25% |
+| Treasury | 1,25% |
+| Security Fund | 0,50% |
+
+### Prinsip
+
+- Fee tidak dapat dinaikkan oleh admin.
+- Perubahan FeeSplitter hanya dapat dilakukan melalui protokol versi baru yang bersifat opt-in.
+- Treasury bukan dompet pribadi tim.
+- Security Fund digunakan untuk audit, bug bounty, respons insiden, dan program perlindungan yang diumumkan.
+- Tidak ada pendapatan dari pencetakan token baru.
+
+## 13. Reward engine
+
+### Distribusi berbasis bobot
+
+Untuk setiap distribusi USDG:
+
+```text
+accRewardPerWeight += rewardUSDG / totalCommissionedWeight
+```
+
+Pending reward suatu mesin:
+
+```text
+pending =
+weight × (accRewardPerWeight − rewardDebtPerWeight)
++ unsettledReward
+```
+
+### Aturan
+
+1. Open Engine tidak dihitung dalam `totalCommissionedWeight`.
+2. Commission mendaftarkan bobot mesin.
+3. Mesin baru tidak berhak atas reward sebelum waktu commissioning.
+4. NFT transfer tidak mengubah total bobot.
+5. Pending reward mengikuti NFT.
+6. Reward dapat diklaim tanpa mengubah status NFT.
+7. Tidak ada reward dalam bentuk `$WORKS`.
+8. Tidak ada auto-compounding atau leverage.
+9. Tidak ada APY yang ditulis dalam kontrak.
+
+### Ketika belum ada mesin commissioned
+
+Reward masuk ke **Genesis Reserve**.
+
+Pilihan desain yang disarankan:
+
+- Genesis Reserve dibagikan kepada mesin pertama secara proporsional berdasarkan bobot pada distribusi awal berikutnya.
+- Tidak seluruhnya diberikan kepada satu mesin pertama, karena hal itu menciptakan insentif sniping berlebihan.
+
+### Variabel ekonomi
+
+Reward per mesin naik jika:
+
+- Volume organik meningkat.
+- Penjualan NFT di Bazaar meningkat.
+- Ada program sponsor dalam USDG.
+
+Reward per mesin turun jika:
+
+- Volume menurun.
+- Total bobot mesin commissioned meningkat.
+- Lebih banyak Prime/Vault diaktifkan.
+
+## 14. Reward Tracks untuk masa depan
+
+Reward Tracks adalah kontrak terpisah untuk menambahkan aset reward tanpa mengubah core.
+
+Contoh:
+
+- USDG sponsored track.
+- ETH track.
+- Stock Token track.
+- Ecosystem partner track.
+
+### Aturan umum
+
+Setiap track harus memiliki:
+
+- Aset ERC-20 yang jelas.
+- Alamat kontrak dari registry resmi.
+- Dana yang disimpan di muka.
+- Waktu mulai dan selesai.
+- Total anggaran.
+- Generasi yang eligible.
+- Bobot distribusi.
+- Jadwal pelepasan.
+- Status legal dan yurisdiksi.
+- Fungsi klaim yang tidak bergantung pada treasury.
+
+Track tidak boleh hanya berupa janji pendanaan off-chain.
+
+### Stock Token Tracks
+
+Stock Tokens dapat menjadi track khusus setelah MVP. Mereka bukan reward default.
+
+Robinhood mendokumentasikan Stock Tokens sebagai ERC-20 yang dapat ditransfer dan digunakan dalam aplikasi DeFi.
+
+Namun, secara legal, Stock Tokens adalah **tokenised debt securities** yang memberikan eksposur ekonomi, bukan hak legal atau beneficial ownership terhadap saham underlying. Produk tersebut juga memiliki pembatasan yurisdiksi.
+
+Karena itu, copy produk yang benar adalah:
+
+> “Reward dalam Stock Tokens yang didanai oleh program tertentu untuk pengguna yang eligible.”
+
+Bukan:
+
+> “NFT ini memberikan saham atau dividen perusahaan.”
+
+### Contoh pemetaan track
+
+| Track | Generasi yang dapat eligible | Aset potensial |
+|---|---|---|
+| Broad Market | Relay | ETF tokenized yang tersedia |
+| Technology | Ledger | Stock Tokens sektor teknologi |
+| Defensive | Vault | ETF/aset defensif yang tersedia |
+| Premier | Prime | Program sponsor multi-aset |
+
+Pemetaan ini hanya contoh arah produk. Tidak ada aset yang dijanjikan sebelum ada pendanaan dan persetujuan legal.
+
+### Gerbang aktivasi Stock Tracks
+
+Semua syarat berikut wajib terpenuhi:
+
+- Legal memo untuk setiap yurisdiksi target.
+- Konfirmasi bahwa distribusi reward tidak melanggar ketentuan issuer.
+- Strategi pembatasan wilayah yang sesuai.
+- Tidak ditawarkan kepada pengguna dari wilayah terlarang.
+- Aset diperoleh secara sah dan disimpan di TrackVault.
+- Alamat kontrak diverifikasi dari registry resmi.
+- Corporate-action handling telah diuji.
+- Materi pemasaran tidak menggunakan klaim saham/dividen yang menyesatkan.
+
+## 15. Integrasi oracle dan Stock Tokens
+
+Jika suatu track memerlukan valuasi atau laporan harga, kontrak harus menggunakan Chainlink feed resmi.
+
+Robinhood Chain menyediakan Chainlink price feeds untuk sejumlah aset kripto dan Stock Tokens. Feed Stock Token sudah memasukkan corporate-action multiplier; kontrak tidak boleh menerapkan multiplier kedua kali.
+
+Integrasi wajib memeriksa:
+
+- `updatedAt` dan heartbeat.
+- Deviasi harga yang tidak wajar.
+- L2 Sequencer Uptime Feed.
+- Grace period setelah sequencer kembali aktif.
+- `oraclePaused()` saat corporate action.
+- Decimals token dan feed.
+- Raw balance versus `balanceOfUI()`.
+
+Distribusi track sebaiknya menggunakan **raw token amount**, bukan bergantung pada nilai USD sesaat. Dengan demikian, reward tidak gagal hanya karena harga sedang paused.
+
+## 16. Arsitektur kontrak
+
+```text
+                         ┌─────────────────────┐
+                         │   Canonical Curve   │
+                         │   WORKS / USDG      │
+                         └──────────┬──────────┘
+                                    │ fee
+                                    ▼
+                         ┌─────────────────────┐
+                         │    FeeSplitter      │
+                         │   65 / 25 / 10      │
+                         └──────┬──────┬───────┘
+                                │      │
+                    ┌───────────┘      └───────────────┐
+                    ▼                                  ▼
+          ┌──────────────────┐              ┌──────────────────┐
+          │ RewardDistributor│              │ Treasury +       │
+          │ USDG per weight  │              │ Security Fund    │
+          └────────┬─────────┘              └──────────────────┘
+                   │
+┌──────────┐   ┌───┴──────────────┐   ┌──────────────────┐
+│ WorksToken│◄──►│ EngineController │◄──►│ RandomnessAdapter│
+│ ERC-20    │   │ escrow + states  │   │ verifiable RNG   │
+└──────────┘   └───┬──────────────┘   └──────────────────┘
+                   │
+                   ▼
+          ┌──────────────────┐        ┌──────────────────┐
+          │ EngineNFT        │◄──────►│ Settle Bazaar    │
+          │ ERC-721          │        │ NFT settlement   │
+          └──────────────────┘        └──────────────────┘
+                   │
+                   ▼
+          ┌──────────────────┐
+          │ TrackVault       │
+          │ future rewards   │
+          └──────────────────┘
+```
+
+### 16.1 WorksToken
+
+Tanggung jawab:
+
+- ERC-20 standar.
+- Initial supply 4.663.
+- Mint hanya di constructor.
+- Tidak ada transfer tax.
+- Tidak ada blacklist.
+- Tidak ada pausable transfer.
+- Burn hanya dapat dipanggil EngineController untuk Commission.
+- Tidak ada alokasi tim setelah deployment.
+
+### 16.2 EngineNFT
+
+Tanggung jawab:
+
+- ERC-721.
+- Mint Open Engine hanya oleh EngineController.
+- Burn Open NFT hanya saat Dissolve.
+- Tidak ada public burn untuk Commissioned NFT.
+- Menyimpan status Open/Commissioned.
+- ERC-2981 untuk kompatibilitas royalti.
+- Metadata dan assignment hash dibekukan sebelum launch.
+
+### 16.3 EngineController
+
+Tanggung jawab:
+
+- Escrow token.
+- Reserve ID management.
+- Materialize, Dissolve, Commission.
+- Randomness request dan cancellation.
+- Fisher–Yates draw.
+- Menjaga seluruh invariant.
+- Tidak memiliki fungsi penarikan escrow oleh admin.
+
+### 16.4 RandomnessAdapter
+
+Tanggung jawab:
+
+- Menerima request dari controller.
+- Memverifikasi proof randomness.
+- Mengembalikan hasil hanya untuk request yang valid.
+- Mencegah replay dan double fulfillment.
+- Tidak memungkinkan admin memasukkan seed manual.
+
+**Catatan penting:** mekanisme randomness dari proyek lama tidak dapat dipindahkan langsung. Dokumentasi Robinhood Chain menyatakan bahwa `block.prevrandao` dan `block.difficulty` menghasilkan nilai konstan dan tidak boleh digunakan sebagai sumber randomness.
+
+Karena ketersediaan VRF harus dibuktikan pada deployment aktual, **random Materialize tidak boleh diluncurkan sebelum provider randomness yang sesuai aktif dan lulus pengujian**. Jika tidak tersedia, peluncuran ditunda—bukan diganti dengan `prevrandao`, timestamp, atau blockhash.
+
+### 16.5 CanonicalCurve
+
+Tanggung jawab:
+
+- Menyimpan reserve WORKS dan USDG.
+- Menghitung harga berdasarkan constant product.
+- Mengambil fee dalam USDG.
+- Mengirim fee ke FeeSplitter.
+- Tidak memiliki fungsi withdraw oleh admin.
+- Tidak dapat mematikan penjualan.
+
+### 16.6 RewardDistributor
+
+Tanggung jawab:
+
+- Mencatat bobot Commissioned Engines.
+- Mengelola akumulator USDG.
+- Menyimpan pending reward per NFT.
+- Memproses klaim.
+- Menjaga reward historis agar tidak dapat diambil mesin baru.
+
+### 16.7 SettleBazaar
+
+Tanggung jawab:
+
+- Listing dan offer.
+- Escrow NFT/order.
+- Settlement atomik dalam USDG.
+- Fee 5%.
+- Pembatalan order.
+- Menyediakan data pending reward pada saat eksekusi.
+
+### 16.8 TrackVault
+
+Tanggung jawab:
+
+- Menyimpan dana setiap Reward Track.
+- Melepaskan aset berdasarkan jadwal.
+- Tidak mengubah bobot inti.
+- Tidak dapat mengambil USDG dari reward utama.
+- Tidak dapat dipaksa menggunakan aset yang belum didanai.
+
+## 17. Keamanan dan governance
+
+### Core yang immutable
+
+Setelah launch, parameter berikut tidak dapat diubah:
+
+- Initial economic units.
+- Fee 1% dan 5%.
+- Fee split 65/25/10.
+- Bobot generasi.
+- Assignment hash.
+- Metadata.
+- Fungsi burn.
+- Aturan escrow.
+- Status terminal Commissioned Engine.
+- Alokasi reward yang belum diklaim.
+
+### Safety Guardian
+
+Multisig 3/5 hanya dapat:
+
+- Menjeda Materialize baru.
+- Menjeda Commission baru.
+- Menjeda pembuatan Reward Track baru.
+
+Safety Guardian **tidak dapat**:
+
+- Mematikan penjualan token.
+- Membekukan transfer token/NFT.
+- Mengambil escrow pengguna.
+- Mengambil pending reward.
+- Mengubah pemilik NFT.
+- Mengubah hasil randomness.
+- Menarik canonical liquidity.
+- Mematikan Dissolve.
+- Mematikan klaim reward.
+
+Jika diperlukan perbaikan besar, solusinya adalah **versi baru dengan migrasi opt-in**, bukan upgrade paksa terhadap aset pengguna.
+
+### Treasury
+
+- Multisig 3/5.
+- Timelock minimal 48 jam.
+- Semua proposal dan transaksi dipublikasikan.
+- Tidak memiliki akses ke escrow, reward pengguna, atau canonical reserve.
+- Signer diumumkan sebelum mainnet.
+
+### Audit dan verifikasi wajib
+
+- Minimal dua audit independen.
+- Source code diverifikasi di Blockscout.
+- Fuzz testing untuk invariant.
+- Testing untuk reentrancy dan callback NFT.
+- Testing randomness replay/cancellation.
+- Testing corporate actions untuk Stock Tracks.
+- Bug bounty sebelum likuiditas besar dimasukkan.
+- Laporan alamat admin dan multisig dipublikasikan.
+
+## 18. Compliance dan batasan produk
+
+### Pernyataan independensi
+
+Semua dokumen publik harus menyatakan:
+
+> “Settleworks adalah proyek independen yang dibangun di Robinhood Chain dan tidak berafiliasi dengan, disponsori, atau didukung oleh Robinhood Markets.”
+
+### Batasan pemasaran
+
+Dilarang menggunakan:
+
+- “Official Robinhood NFT.”
+- “Saham resmi Robinhood.”
+- “Dividen saham otomatis.”
+- “APY dijamin.”
+- “Bebas risiko.”
+- “Pendapatan pasif tetap.”
+- “Setara memiliki saham underlying.”
+
+### Risiko yang wajib dijelaskan
+
+- Reward bergantung pada volume.
+- Commission bersifat permanen.
+- USDG memiliki risiko issuer dan depeg.
+- NFT dapat kehilangan likuiditas.
+- Harga token dapat turun.
+- Stock Tokens memiliki pembatasan yurisdiksi.
+- Bridge pihak ketiga memiliki risiko tambahan.
+- L2 sequencer dan oracle dapat mengalami gangguan.
+
+### Bridging
+
+Canonical Arbitrum bridge adalah rute trustless default dengan deposit sekitar 10 menit dan withdrawal sekitar tujuh hari. Rute seperti CCIP, LayerZero/Stargate, Relay, Across, dan LiFi dapat lebih cepat tetapi membawa model kepercayaan masing-masing.
+
+Settleworks tidak boleh menyebut semua bridge sebagai “trustless” atau “instan”.
+
+## 19. Arah merek dan visual koleksi
+
+Ini adalah arah identitas, bukan spesifikasi UI.
+
+### Konsep visual
+
+**“Precision instruments for an always-on settlement economy.”**
+
+Berbeda dari komputer retro dan kuil klasik, Settleworks menggunakan:
+
+- Instrumen industri presisi.
+- Plat logam dan komponen settlement.
+- Kertas ledger dan receipt abstrak.
+- Circuit engraving.
+- Segel commissioning.
+- Bentuk modular yang menunjukkan aliran nilai.
+
+### Palet
+
+- Carbon black
+- Titanium silver
+- Cobalt blue
+- Warm amber
+- Porcelain white
+
+Hijau neon khas Robinhood tidak dijadikan warna utama agar tidak menimbulkan kesan afiliasi.
+
+### Perubahan visual saat Commission
+
+- Seal atau inti mesin menjadi aktif.
+- Elemen amber/cobalt menyala.
+- Serial number memperoleh tanda Commissioned.
+- Metadata status berubah secara permanen.
+- Tidak ada animasi yang menyiratkan APY atau nilai yang dijamin.
+
+### Penyimpanan art
+
+Preferensi desain:
+
+- Generator deterministik.
+- Assignment hash dipublikasikan sebelum launch.
+- Metadata dibekukan.
+- SVG atau data visual disimpan on-chain bila ukuran dan biaya memungkinkan.
+- Jika memakai penyimpanan eksternal, gunakan content addressing dan dokumentasikan ketergantungannya.
+
+## 20. Roadmap berbasis gerbang
+
+### M0 — Finalisasi konsep
+
+Deliverables:
+
+- PRD final.
+- Legal clearance nama dan ticker.
+- Tokenomics simulation.
+- Penetapan initial USDG liquidity.
+- Pemilihan multisig signer.
+- Spesifikasi randomness.
+- Spesifikasi metadata.
+
+**Exit gate:** tidak ada keputusan ekonomi atau legal kritis yang masih ambigu.
+
+### M1 — Testnet
+
+Deliverables:
+
+- WorksToken.
+- EngineNFT.
+- EngineController.
+- CanonicalCurve.
+- FeeSplitter.
+- RewardDistributor.
+- SettleBazaar.
+- Mock randomness hanya untuk testnet.
+- Event dan indexer schema.
+
+**Exit gate:** seluruh fungsi dan failure path berjalan di testnet 46630.
+
+### M2 — Security readiness
+
+Deliverables:
+
+- Dua audit.
+- Fuzz dan invariant test.
+- Public test report.
+- Bug bounty.
+- Verified source.
+- Final multisig dan timelock.
+- Emergency drill.
+
+**Exit gate:** tidak ada temuan critical/high yang belum diselesaikan.
+
+### M3 — Mainnet readiness
+
+Deliverables:
+
+- Randomness provider aktif dan terverifikasi.
+- Metadata dan assignment hash dibekukan.
+- USDG liquidity tersedia.
+- Canonical asset addresses diverifikasi.
+- Semua admin permission dipublikasikan.
+- Tidak ada Stock Track aktif.
+
+**Exit gate:** checklist mainnet disetujui teknik, keamanan, dan legal.
+
+### M4 — Public launch
+
+Ruang lingkup:
+
+- WORKS/USDG trading.
+- Materialize.
+- Dissolve.
+- Commission.
+- USDG reward.
+- Settle Bazaar.
+- Tanpa whitelist.
+- Tanpa launch tax.
+- Tanpa presale.
+
+### M5 — Ecosystem expansion
+
+- Sponsored USDG Tracks.
+- Integrasi wallet dan data.
+- Cross-chain funding routes.
+- Partner-funded programs.
+- Contract API dan event documentation.
+
+### M6 — Stock Token Tracks
+
+Hanya setelah:
+
+- Legal clearance.
+- Asset funding.
+- Registry verification.
+- Jurisdiction controls.
+- Corporate-action testing.
+- Oracle failure testing.
+
+## 21. Metrik keberhasilan
+
+### North-star metric
+
+**USDG dari biaya organik yang didistribusikan kepada Commissioned Engines selama 30 hari.**
+
+Volume mentah tidak cukup karena dapat ditingkatkan melalui wash trading.
+
+### Metrik ekonomi
+
+- Canonical volume organik.
+- Fee yang masuk ke reward, treasury, dan Security Fund.
+- Reward per total weight.
+- Reward per generasi.
+- Protocol revenue setelah biaya operasional.
+- Persentase volume yang terindikasi wash trading.
+
+### Metrik aktivasi
+
+- Jumlah Open Engines.
+- Jumlah Commissioned Engines.
+- Commissioned supply ratio.
+- Total commissioned weight.
+- Rasio Commission terhadap Dissolve.
+- Waktu rata-rata dari Materialize ke Commission.
+
+### Metrik pasar
+
+- Unique WORKS holders.
+- Unique Engine owners.
+- Konsentrasi 10 dan 50 holder terbesar.
+- NFT listing ratio.
+- NFT sales dan unique buyers.
+- Selisih harga token versus NFT floor.
+- Slippage canonical pool.
+
+### Metrik keamanan
+
+- Failed randomness requests.
+- Cancelled randomness requests.
+- Jumlah invariant violations—harus selalu nol.
+- Security Fund balance.
+- Audit findings yang belum ditutup.
+- Treasury proposals dan waktu eksekusi.
+
+## 22. Acceptance criteria MVP
+
+MVP tidak boleh dianggap siap sebelum seluruh kondisi berikut terpenuhi:
+
+### Token dan escrow
+
+- Tidak ada fungsi mint setelah deployment.
+- Tidak ada transfer tax.
+- Tidak ada blacklist.
+- Tidak ada admin withdrawal dari escrow.
+- Setiap Open Engine memiliki backing 1 WORKS.
+- Dissolve selalu mengembalikan tepat 1 WORKS.
+
+### Commission
+
+- Hanya pemilik Open Engine yang dapat melakukan Commission.
+- Commission mengurangi token supply tepat 1 unit.
+- Commissioned Engine tidak dapat di-Dissolve.
+- Tidak ada reward historis yang diterima mesin baru.
+- Invariant economic units tetap berlaku.
+
+### Randomness
+
+- Tidak memakai `prevrandao`, timestamp, atau blockhash.
+- Proof diverifikasi on-chain.
+- Replay gagal.
+- Double fulfillment gagal.
+- Timeout mengembalikan escrow.
+- Hasil tidak dapat dipilih oleh admin.
+
+### Likuiditas dan reward
+
+- Tidak ada fungsi penarikan LP.
+- Sell tetap dapat dilakukan ketika Guardian pause aktif.
+- Claim dan Dissolve tetap berfungsi ketika pause aktif.
+- Fee split tidak dapat diubah.
+- Pending reward mengikuti NFT setelah transfer.
+- Seluruh reward dapat direkonsiliasi dengan fee yang masuk.
+
+### Transparansi
+
+- Source terverifikasi.
+- Metadata frozen.
+- Assignment hash cocok.
+- Alamat treasury dan Guardian dipublikasikan.
+- Tidak ada token tim tersembunyi.
+- Tidak ada Stock Track yang aktif tanpa dokumen pendukung.
+
+## 23. Risiko utama dan mitigasi
+
+| Risiko | Dampak | Mitigasi |
+|---|---|---|
+| Randomness provider tidak tersedia | Materialize tidak aman | Jadikan provider aktif sebagai launch gate; sediakan timeout refund |
+| Bug pada custom curve | Dana pool terancam | Kurva minimal, audit ganda, invariant testing, tidak ada upgrade tersembunyi |
+| Wash trading | Volume dan reward tampak palsu | Gunakan metrik organik; jangan memberi emisi berdasarkan volume |
+| Reward turun saat volume rendah | Pengguna kecewa | Tidak ada APY tetap; tampilkan sumber reward secara eksplisit |
+| USDG depeg atau issuer risk | Nilai reward turun | Disclosure; TrackVault dapat menambah aset lain tanpa mengubah core |
+| Commission salah dilakukan | Token hilang permanen | Fungsi kontrak yang jelas, simulasi transaksi, status immutable |
+| NFT kekurangan likuiditas | Sulit keluar setelah Commission | Open Engine tetap reversible; risiko Commission dijelaskan |
+| Royalti eksternal tidak ditegakkan | Fee NFT berkurang | Hanya Bazaar yang menjamin fee; jangan menjanjikan royalti universal |
+| Admin/multisig disusupi | Treasury terancam | 3/5 multisig, timelock, batas fungsi, tidak ada akses ke aset pengguna |
+| Sequencer/oracle berhenti | Data atau transaksi tertunda | Uptime feed, staleness check, tidak ada likuidasi time-critical dalam MVP |
+| Stock Token melanggar pembatasan | Risiko hukum | Track nonaktif secara default dan legal gate per program |
+| Nama/ticker bermasalah | Risiko merek dan phishing | Clearance sebelum publikasi; registry kontrak resmi |
+
+## 24. Keputusan yang masih harus ditetapkan
+
+Sebelum masuk implementasi, tujuh keputusan berikut perlu dikunci:
+
+1. **Ketersediaan hukum nama Settleworks dan ticker `$WORKS`.**
+2. **Jumlah initial USDG liquidity (`Q0`) dan initial spot price.**
+3. **Provider verifiable randomness yang benar-benar aktif di chain ID 4663.**
+4. **Signer multisig Treasury dan Safety Guardian.**
+5. **Penyimpanan final art dan metadata.**
+6. **Auditor, anggaran audit, dan cakupan bug bounty.**
+7. **Struktur legal untuk treasury serta aktivasi Stock Token Tracks.**
+
+## 25. Ringkasan blueprint
+
+Settleworks mempertahankan daya tarik utama konsep terdahulu—**mengubah token likuid menjadi NFT yang menghasilkan reward**—tetapi membangunnya ulang dengan prinsip yang lebih kuat:
+
+```text
+4.663 WORKS
+     │
+     ├── Likuid dan bebas ditransfer
+     │
+     ├── Materialize → Open Engine
+     │       ├── reversible melalui Dissolve
+     │       └── tidak mendapat reward
+     │
+     └── Commission → Commissioned Engine
+             ├── 1 WORKS terbakar
+             ├── permanen
+             ├── bobot berdasarkan generasi
+             └── reward USDG dari fee nyata
+```
+
+**Pembeda utamanya:**
+
+- Suplai 4.663 yang selaras dengan chain ID.
+- Reward awal dalam USDG.
+- Open Engine reversible.
+- Hanya Commission yang mengurangi token supply.
+- Tidak ada transfer tax atau routing lock.
+- Tidak ada whitelist dan launch penalty.
+- Tidak ada reward inflasioner dalam WORKS.
+- Randomness khusus untuk Robinhood Chain.
+- Core immutable dengan Guardian yang sangat terbatas.
+- Stock Tokens sebagai ekspansi berdana dan berbasis eligibility, bukan janji kosong sejak awal.
+
+Secara konsep, Settleworks menjadi lebih bersih, lebih mudah diaudit, dan lebih relevan dengan ekosistem Robinhood Chain daripada sekadar menyalin proyek lama ke chain baru.

@@ -1,0 +1,6 @@
+{
+  "name": "Settleworks Protocol",
+  "description": "Hybrid liquid token and collectible settlement engines on Robinhood Chain (Chain ID 4663). Materialize $WORKS, commission permanent engines, and share protocol USDG fees.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
